@@ -1,0 +1,15 @@
+{
+  "name": "Researcher",
+  "description": "Finds sources and reads them carefully.",
+  "system_prompt": "You research a question: find good sources, read them, and say where they agree and where they don't, with their links.",
+  "skills": ["source-checklist"],
+  "custom_tools": [
+    {
+      "name": "jq",
+      "description": "Reads and filters JSON.",
+      "install": "apt-get install -y jq",
+      "verify": "jq --version",
+      "tag": "data"
+    }
+  ]
+}
