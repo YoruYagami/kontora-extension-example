@@ -6,7 +6,8 @@ Extensions** by pasting the repo's address: this one is
 `github.com/YoruYagami/kontora-extension-example`.
 
 This repo is a working example: a Researcher agent with a program, an Editor, a skill, and an
-app, **Sources**, that keeps a project's sources and asks the Researcher to check one.
+app, **Sources**, that keeps a project's sources, asks the Researcher to check one and shows its
+answer, and shares the list with the agents, who add to it as they work.
 
 - [Start in five minutes](#start-in-five-minutes)
 - [kontora-extension.json](#kontora-extensionjson)
@@ -14,6 +15,7 @@ app, **Sources**, that keeps a project's sources and asks the Researcher to chec
 - [Skills](#skills)
 - [An app](#an-app)
 - [The bridge: `kontora.*`](#the-bridge-kontora)
+- [Data the agents use too](#data-the-agents-use-too)
 - [Releases, updates and uninstalling](#releases-updates-and-uninstalling)
 - [Trying it before you publish](#trying-it-before-you-publish)
 - [Limits](#limits)
@@ -108,14 +110,20 @@ An app is a page of its own in Kontora's bar, as Notes and Kanban are, for the p
 Name it in `kontora-extension.json`:
 
 ```json
-"app": { "name": "Sources", "page": "app/index.html", "may": ["start_chats"] }
+"app": {
+  "name": "Sources",
+  "page": "app/index.html",
+  "may": ["start_chats"],
+  "for_agents": { "sources": "The project's sources: a list of { url, note, by }." }
+}
 ```
 
 | Field | | |
 | --- | --- | --- |
 | `name` | required | Its name in the bar, 40 letters at most. |
 | `page` | required | Its page: an `.html` file in a folder of the repo. **That folder is the app**: its files, and only those, are kept on the user's PC and served to it. |
-| `may` | | What it may ask Kontora for besides its own data. Today: `"start_chats"`, the agents' names and chats started with them. Kontora shows it before installing, and refuses what it doesn't know. |
+| `may` | | What it may ask Kontora for besides its own data. Today: `"start_chats"`, the agents' names, chats started with them, and following those chats to their answers. Kontora shows it before installing, and refuses what it doesn't know. |
+| `for_agents` | | What of its data the agents may read and write: each key, with what it holds. See [Data the agents use too](#data-the-agents-use-too). |
 
 **Where it runs.** Its page opens in a sandboxed frame with no origin of its own: it can't read
 Kontora's page, nor its storage, nor call Kontora's API, and it has **no network**. It loads its
@@ -147,8 +155,11 @@ const kontora = await Kontora.connect();
 | `kontora.may` | What it was given: `["start_chats"]`, or `[]`. |
 | `await kontora.data.get(key)` | Its own data for this project: any JSON, or `null` if none was kept. |
 | `await kontora.data.set(key, value)` | Keeps `value` (any JSON) for this project; `null` removes it. |
+| `kontora.data.watch(key, (value) => …)` | Told each change of `key` while the page is open, whoever made it: an agent, too. Gives back a function that stops it. |
 | `await kontora.agents()` | With `start_chats`: the agents, `[{ name, description }]`. |
 | `await kontora.chats.start({ agent, message })` | With `start_chats`: a new chat of the project, `agent` (by name; none: the main agent) answering `message` at once, as if the user had asked. Gives `{ chat }`. |
+| `kontora.chats.watch(chat, ({ state, answer }) => …)` | With `start_chats`, for a chat it started: told how it stands, `working`, `needs_you` (an agent waits for the user's yes, in the chat), `stuck`, `stopped` or `done`, with the agent's last `answer` once done. Gives back a function that stops it. |
+| `await kontora.agents.ask({ agent, message })` | With `start_chats`: `chats.start`, then its answer once done: `{ chat, answer }`. Fails if the chat stops or is stuck. |
 | `await kontora.chats.open(chat)` | With `start_chats`: shows that chat in Kontora. |
 
 Each call returns a promise; one that is refused (not given, a key that doesn't fit, a value too
@@ -156,8 +167,30 @@ big) rejects with an `Error` saying why.
 
 - **Keys**: letters, digits, `-`, `_` and `.`, 64 at most.
 - **Data** is kept on the user's PC by the extension's repo: it stays when the extension is
-  uninstalled, and is there again if it is installed again. It is never sent anywhere, nor seen
-  by the agents.
+  uninstalled, and is there again if it is installed again. It is never sent anywhere; the
+  agents see only the keys it names in `for_agents`.
+- **Chats** an app starts are the user's: among the project's chats, marked with the app's
+  name. If an agent needs the user (a yes before it runs something), it waits there.
+
+## Data the agents use too
+
+An app can share some of its data with the agents, so they work on what it shows: the
+Researcher adds the sources it finds, a pentest's agents add their findings. Name each key in
+`for_agents`, saying what it holds, in words the agents read: its shape, and how to change it
+("add to the list; keep what is there").
+
+```json
+"for_agents": { "sources": "The project's sources: a list of { url, note, by }, by being the name of whoever added it. Add to the list; keep what is there." }
+```
+
+- The user reads it before installing: **Your agents may use**.
+- Every agent can then use two tools, for the project of its chat:
+  - `read_app_data`: a key's value; it only looks, so it runs at once;
+  - `write_app_data`: a key's value, written whole; it asks the user first, as their Ask first
+    says, and an agent's tools can turn either off.
+- The open app sees an agent's change with `kontora.data.watch`.
+- Keys not named stay the app's own. What an agent reads there is shown to it as data, never as
+  instructions; read what agents wrote the same way, checking it before you show it.
 
 ## Releases, updates and uninstalling
 

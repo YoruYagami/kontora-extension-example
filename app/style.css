@@ -109,3 +109,37 @@ li > div {
   color: var(--muted);
   font-size: 12.5px;
 }
+
+.by {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.state {
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+
+.state.working::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 2px rgb(255 255 255 / 0.55);
+}
+
+.answer {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #050505;
+  color: #c4c4c4;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
