@@ -1,25 +1,189 @@
-# Kontora extension example
+# Making an extension for Kontora
 
-An example extension of [Kontora](https://github.com/YoruYagami/Kontora): agents and skills
-anyone can install from a GitHub repo, in **Settings › Extensions**, by pasting
+An extension brings [Kontora](https://github.com/YoruYagami/Kontora) **agents**, **skills** and
+an **app** of its own, from a public GitHub repo. Anyone installs it in **Settings ›
+Extensions** by pasting the repo's address: this one is
 `github.com/YoruYagami/kontora-extension-example`.
 
-## What a repo holds
+This repo is a working example: a Researcher agent with a program, an Editor, a skill, and an
+app, **Sources**, that keeps a project's sources and asks the Researcher to check one.
 
+- [Start in five minutes](#start-in-five-minutes)
+- [kontora-extension.json](#kontora-extensionjson)
+- [Agents](#agents)
+- [Skills](#skills)
+- [An app](#an-app)
+- [The bridge: `kontora.*`](#the-bridge-kontora)
+- [Releases, updates and uninstalling](#releases-updates-and-uninstalling)
+- [Trying it before you publish](#trying-it-before-you-publish)
+- [Limits](#limits)
+
+## Start in five minutes
+
+1. Make a **public** repo on GitHub.
+2. Put a `kontora-extension.json` at its top:
+
+   ```json
+   { "kontora": 1, "name": "My kit", "description": "What it is for, in a line." }
+   ```
+
+3. Add what it brings, any of these:
+
+   ```
+   kontora-extension.json   what it is
+   agents/*.json            its agents, one file each
+   skills/<folder>/SKILL.md its skills, one folder each
+   app/index.html           its app, with the files beside it (named in the manifest)
+   ```
+
+4. Publish a **release** on GitHub (Releases › Draft a new release, a tag like `v1.0.0`).
+5. In Kontora, **Settings › Extensions**, paste `github.com/you/your-repo` and press **Read it**:
+   Kontora shows what it brings, then installs it.
+
+## kontora-extension.json
+
+| Field | | |
+| --- | --- | --- |
+| `kontora` | required | The format: `1`. A Kontora too old for a newer format says so. |
+| `name` | required | Its name, shown in Settings › Extensions. |
+| `description` | | What it is for, in a line. |
+| `app` | | Its app: see [An app](#an-app). |
+
+## Agents
+
+Each `agents/*.json` (directly in `agents/`) is one agent, as Kontora keeps one:
+
+```json
+{
+  "name": "Researcher",
+  "description": "Finds sources, reads them carefully, and says how sure it is.",
+  "system_prompt": "You research a question: find good sources, read them, and say where they agree.",
+  "skills": ["source-checklist"],
+  "custom_tools": [
+    {
+      "name": "jq",
+      "description": "Reads and filters JSON.",
+      "install": "apt-get install -y jq",
+      "verify": "jq --version",
+      "tag": "data"
+    }
+  ]
+}
 ```
-kontora-extension.json   what it is: { "kontora": 1, "name": "…", "description": "…" }
-agents/*.json            its agents, one file each, as Kontora keeps an agent
-skills/<folder>/SKILL.md its skills, one folder each
+
+| Field | | |
+| --- | --- | --- |
+| `name` | required | Its name: called with `@` in a chat. |
+| `description` | | What it does, in a line. |
+| `system_prompt` | | Its instructions. |
+| `output_format` | | How its answers should look. |
+| `when_to_use`, `domain`, `triggers`, `tags` | | When it is the one to ask: what the other agents read of it, and the words that send it a message. |
+| `skills` | | The skills it uses, by name: yours, or others already in the user's library. |
+| `custom_tools` | | Its **programs** in the agents' sandbox (a Linux container), each with its `name` (the command), the `install` command and the `verify` command that says it is there (none: `command -v` and its name). They are installed in the sandbox only, never on the user's PC. |
+
+The easiest way to write one: make the agent in Kontora, export it from **Settings › Export &
+import**, and take its entry from `kontora-library.json` in the `.zip` (leave out its `id`).
+
+## Skills
+
+Each folder under `skills/` with a `SKILL.md` is a skill; the other files in its folder come
+with it.
+
+```markdown
+---
+name: source-checklist
+description: How to judge a source before using it.
+---
+# Source checklist
+
+Before you use a source, check who wrote it, and when...
 ```
 
-- **Agents** have a `name`, and may have a `description`, a `system_prompt`, the `skills` they
-  use (by name) and `custom_tools`: programs installed in the agents' sandbox, each with its
-  `install` command and the `verify` command that says it is there.
-- **Skills** are folders with a `SKILL.md`, its `name` and `description` at its top; other files
-  in the folder come with it.
+`name` and `description` are required: the agents read the description to know when to open
+the skill.
 
-## Releases
+## An app
 
-Kontora installs the latest release, at its commit (with no release, the default branch), and
-shows what it brings first: its agents, its skills, and its programs with what installs them.
-A newer release shows in the extension's row, to update to.
+An app is a page of its own in Kontora's bar, as Notes and Kanban are, for the project chosen.
+Name it in `kontora-extension.json`:
+
+```json
+"app": { "name": "Sources", "page": "app/index.html", "may": ["start_chats"] }
+```
+
+| Field | | |
+| --- | --- | --- |
+| `name` | required | Its name in the bar, 40 letters at most. |
+| `page` | required | Its page: an `.html` file in a folder of the repo. **That folder is the app**: its files, and only those, are kept on the user's PC and served to it. |
+| `may` | | What it may ask Kontora for besides its own data. Today: `"start_chats"`, the agents' names and chats started with them. Kontora shows it before installing, and refuses what it doesn't know. |
+
+**Where it runs.** Its page opens in a sandboxed frame with no origin of its own: it can't read
+Kontora's page, nor its storage, nor call Kontora's API, and it has **no network**. It loads its
+own files only, so bring every script, style, picture and font it needs (no CDN). Use relative
+paths (`app.js`, `style.css`); the bridge is at `/extension-apps/kontora.js`.
+
+The page of this repo's app, `app/index.html`:
+
+```html
+<!doctype html>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="style.css">
+<script src="/extension-apps/kontora.js"></script>
+<script src="app.js" defer></script>
+```
+
+Kontora is dark: set `color-scheme` and a background of your own, or the frame shows white.
+
+## The bridge: `kontora.*`
+
+```js
+const kontora = await Kontora.connect();
+```
+
+| | |
+| --- | --- |
+| `kontora.project` | `{ id, name }`: the project chosen in Kontora (`id` is `""` for no project). The app opens again when the user chooses another. |
+| `kontora.may` | What it was given: `["start_chats"]`, or `[]`. |
+| `await kontora.data.get(key)` | Its own data for this project: any JSON, or `null` if none was kept. |
+| `await kontora.data.set(key, value)` | Keeps `value` (any JSON) for this project; `null` removes it. |
+| `await kontora.agents()` | With `start_chats`: the agents, `[{ name, description }]`. |
+| `await kontora.chats.start({ agent, message })` | With `start_chats`: a new chat of the project, `agent` (by name; none: the main agent) answering `message` at once, as if the user had asked. Gives `{ chat }`. |
+| `await kontora.chats.open(chat)` | With `start_chats`: shows that chat in Kontora. |
+
+Each call returns a promise; one that is refused (not given, a key that doesn't fit, a value too
+big) rejects with an `Error` saying why.
+
+- **Keys**: letters, digits, `-`, `_` and `.`, 64 at most.
+- **Data** is kept on the user's PC by the extension's repo: it stays when the extension is
+  uninstalled, and is there again if it is installed again. It is never sent anywhere, nor seen
+  by the agents.
+
+## Releases, updates and uninstalling
+
+- Kontora installs your **latest release** at the commit its tag points to; drafts and
+  pre-releases are skipped. A repo with no release installs its default branch as it is.
+- It shows first what it brings: its agents, skills, the programs they install with their
+  commands, and its app with what it may do. It installs exactly what was shown.
+- Something the user already has of the same name stays theirs: yours isn't installed in its
+  place, and Kontora says so.
+- Publish a newer release and Kontora's row says **Update to v…**. Updating replaces what your
+  extension placed (the user's changes to it go), adds what is new and removes what it no
+  longer brings.
+- Uninstalling removes its agents (with their routines), its skills and its app. Its app's data
+  stays on the user's PC.
+
+## Trying it before you publish
+
+Kontora installs from GitHub only, so try it from a repo of your own: push to a test repo with
+no release (Kontora takes its default branch), install it, change, uninstall and install again.
+When it works, publish a release from your real repo.
+
+## Limits
+
+- Public repos only: Kontora asks GitHub without a token.
+- GitHub answers 60 asks an hour from one place without a token: reading an extension takes
+  three, a row's check for updates two.
+- A repo's files: 100 MB zipped, 200 MB and 5,000 files unpacked. An app: 500 files and 20 MB.
+  A skill: 500 files and 20 MB.
+- An app's data: 1 MB a value, 10 MB a project.

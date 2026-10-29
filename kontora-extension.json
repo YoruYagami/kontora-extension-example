@@ -1,5 +1,10 @@
 {
   "kontora": 1,
   "name": "Example kit",
-  "description": "An example extension of Kontora: a researcher with a program, an editor, and a skill."
+  "description": "An example extension of Kontora: a researcher with a program, an editor, a skill, and an app that keeps a project's sources.",
+  "app": {
+    "name": "Sources",
+    "page": "app/index.html",
+    "may": ["start_chats"]
+  }
 }

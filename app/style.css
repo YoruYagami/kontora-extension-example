@@ -1,0 +1,111 @@
+/* Sources, dark as Kontora is: its own fonts aren't reachable, so the system's. */
+:root {
+  color-scheme: dark;
+  --text: #fafafa;
+  --muted: #a3a3a3;
+  --line: rgb(255 255 255 / 0.1);
+  --surface: rgb(255 255 255 / 0.03);
+}
+
+body {
+  margin: 0;
+  padding: 22px 24px;
+  background: #0b0b0b;
+  color: var(--text);
+  font: 14px/1.5 system-ui, sans-serif;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.project {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+input {
+  flex: 1 1 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #050505;
+  color: inherit;
+  font: inherit;
+}
+
+button {
+  padding: 7px 14px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+form button {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+ul {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+ul:empty {
+  display: none;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+li + li {
+  border-top: 1px solid var(--line);
+}
+
+li > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.url {
+  overflow: hidden;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note,
+.hint,
+.said {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}

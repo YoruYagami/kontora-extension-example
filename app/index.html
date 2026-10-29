@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <title>Sources</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="/extension-apps/kontora.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <p class="project" id="project"></p>
+      <form id="add">
+        <input id="url" type="url" required placeholder="https://…" aria-label="A source's address" />
+        <input id="note" placeholder="What it is for (optional)" aria-label="What it is for" />
+        <button>Add</button>
+      </form>
+      <p class="hint" id="empty">No sources yet: add one above.</p>
+      <ul id="sources" aria-label="Sources"></ul>
+      <p class="said" id="said" role="status"></p>
+    </main>
+  </body>
+</html>
