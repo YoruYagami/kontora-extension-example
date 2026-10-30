@@ -1,5 +1,5 @@
 // Sources: a project's sources, kept by Kontora for the project and shared with the agents, who
-// add to it as they work. Each is checked by the Researcher in a chat of its own, followed here
+// add to it as they work. Each is checked by the main agent in a chat of its own, followed here
 // until it answers. Everything goes through Kontora's bridge (kontora.js): this page has no
 // network and can't reach Kontora otherwise.
 (async () => {
@@ -19,11 +19,11 @@
 
   /** What a source's check says: who has it, and how it stands. */
   const STATES = {
-    working: "Researcher is checking it…",
-    needs_you: "Researcher needs you, in its chat",
-    stuck: "Researcher is stuck: see its chat",
+    working: "Being checked…",
+    needs_you: "Its check needs you, in its chat",
+    stuck: "Its check is stuck: see its chat",
     stopped: "Its check stopped",
-    done: "Checked by Researcher",
+    done: "Checked",
   };
 
   function button(label, run) {
@@ -57,10 +57,11 @@
     if (source.answer) what.append(span("answer", source.answer));
     const check = source.chat
       ? button("Open the chat", () => kontora.chats.open(source.chat))
-      : button("Check with Researcher", async () => {
+      : button("Check it", async () => {
           const words = source.note ? `\n\nWhat it is for: ${source.note}` : "";
+          // No agent named: the main agent answers. One of the user's could be named instead,
+          // chosen from kontora.agents().
           const { chat } = await kontora.chats.start({
-            agent: "Researcher",
             message: `Check this source: ${source.url}${words}`,
           });
           const now = await sources();
